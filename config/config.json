@@ -1,0 +1,9 @@
+{
+    "WIFI_SSID": "Xiaomi15"
+    "WIFI_PASSWD": "hallo123"
+    "HUMIDITY_MAX": 2600
+    "HUMIDITY_MIN": 1000
+    "MQTT_MAIN_TOPIC": "watering_system/"
+    "MQTT_HOST": "10.143.165.156"
+    "MQTT_PORT": "1883"
+}
