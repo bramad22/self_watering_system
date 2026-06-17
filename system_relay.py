@@ -75,7 +75,7 @@ while True:
     raw, percent = get_moisture()
     print("RAW:", raw, "| Feuchtigkeit:", percent, "%")
 
-    if raw <= MQTT_THRESHOLD:
+    if raw >= MQTT_THRESHOLD:
         send_mqtt_alert(raw)
         
         relay.on()  
