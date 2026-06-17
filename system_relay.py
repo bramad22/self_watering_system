@@ -1,8 +1,9 @@
-from machine import ADC, Pin
+from machine import ADC, Pin, I2C
 import time
 import json
 from sustain_base import SustainBase
 from umqtt.simple import MQTTClient
+from vl53l0x import VL53L0X
 
 # Sustain_base
 base = SustainBase('config/config.json')
@@ -12,6 +13,11 @@ config = base.get_config()
 adc = ADC(Pin(32))
 adc.atten(ADC.ATTN_11DB)
 adc.width(ADC.WIDTH_12BIT)
+
+# TOF 
+i2c = I2C(1, sda=Pin(21), scl=Pin(22), freq=400000)  # I2C1 mit GPIO21 (SDA) und GPIO22 (SCL)
+tof = VL53L0X(i2c)
+tof.start()
 
 # Config
 RAW_DRY = int(config['HUMIDITY_MAX'])
@@ -60,9 +66,9 @@ def get_moisture():
     return raw, moisture
 
 # Nachricht senden
-def send_mqtt_alert(raw_value):
+def send_mqtt_alert(raw_value, water_level):
     topic = config['MQTT_MAIN_TOPIC'] + 'moisture_alert'
-    message = json.dumps({"raw": raw_value, "message": "Feuchtigkeits-Schwellenwert erreicht!"})
+    message = json.dumps({"raw": raw_value, "message": "Feuchtigkeits-Schwellenwert erreicht! Pflanze braucht Wasser!!!", "water-level": water_level})
     mqtt.publish(topic, message, True)
     print(f"MQTT-Nachricht gesendet: {message}")
 
@@ -73,13 +79,16 @@ while True:
 
     # Feuchtigkeit messen und senden
     raw, percent = get_moisture()
-    print("RAW:", raw, "| Feuchtigkeit:", percent, "%")
+    water_level = tof.read()
+    
+    print("RAW:", raw, "| Feuchtigkeit:", percent, "% | Füllstand: ", water_level, "mm")
 
     if raw >= MQTT_THRESHOLD:
-        send_mqtt_alert(raw)
+        send_mqtt_alert(raw, water_level)
+
         
         relay.on()  
         time.sleep(1)
         relay.off()  
 
-    time.sleep(1)
+    time.sleep(5)

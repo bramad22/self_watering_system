@@ -59,9 +59,9 @@ def get_moisture():
     return raw, moisture
 
 # Nachricht senden
-def send_mqtt_alert(raw_value):
+def send_mqtt_alert(raw_value, water_level):
     topic = config['MQTT_MAIN_TOPIC'] + 'moisture_alert'
-    message = json.dumps({"raw": raw_value, "message": "Feuchtigkeits-Schwellenwert erreicht!"})
+    message = json.dumps({"raw": raw_value, "message": "Feuchtigkeits-Schwellenwert erreicht! Pflanze braucht Wasser!!!", "water-level": water_level})
     mqtt.publish(topic, message, True)
     print(f"MQTT-Nachricht gesendet: {message}")
 
@@ -72,10 +72,11 @@ while True:
 
     # Feuchtigkeit messen und senden
     raw, percent = get_moisture()
+    water_level = tof.read()
     
-    print("RAW:", raw, "| Feuchtigkeit:", percent, "%")
+    print("RAW:", raw, "| Feuchtigkeit:", percent, "% | Füllstand: ", water_level, "mm")
 
     if raw <= MQTT_THRESHOLD:
-        send_mqtt_alert(raw)
+        send_mqtt_alert(raw, water_level)
 
-    time.sleep(1)
+    time.sleep(5)
