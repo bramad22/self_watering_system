@@ -1,3 +1,3 @@
 ﻿# self_watering_system
 
-![Uploading IMG_20260623_184723.jpg…]()
+![image](./IMG_Project.jpg)
