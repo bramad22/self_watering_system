@@ -17,7 +17,6 @@ adc.width(ADC.WIDTH_12BIT)
 # TOF 
 i2c = I2C(1, sda=Pin(21), scl=Pin(22), freq=400000)  # I2C1 mit GPIO21 (SDA) und GPIO22 (SCL)
 tof = VL53L0X(i2c)
-tof.start()
 
 # Config
 RAW_DRY = int(config['HUMIDITY_MAX'])
@@ -40,10 +39,6 @@ mqtt = MQTTClient(
 # Methode für eingehende MQTT-Nachrichten
 def mqtt_callback(topic, msg):
     print(f"Nachricht empfangen auf {topic}: {msg}")
-    # Relay für 1 Sekunde einschalten
-    relay.on()  # oder relay.off() - je nach Modul-Logik
-    time.sleep(1)
-    relay.off()  # oder relay.on()
 
 # MQTT connected
 mqtt.set_callback(mqtt_callback)
@@ -79,16 +74,15 @@ while True:
 
     # Feuchtigkeit messen und senden
     raw, percent = get_moisture()
-    water_level = tof.read()
+    water_level = int((110 - tof.range) / 110 * 100)
     
-    print("RAW:", raw, "| Feuchtigkeit:", percent, "% | Füllstand: ", water_level, "mm")
+    print("RAW:", raw, "| Feuchtigkeit:", percent, "% | Füllstand: ", water_level, "%")
 
     if raw >= MQTT_THRESHOLD:
         send_mqtt_alert(raw, water_level)
-
         
         relay.on()  
         time.sleep(1)
-        relay.off()  
+        relay.off() 
 
     time.sleep(5)
